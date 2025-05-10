@@ -53,7 +53,9 @@ class PIDController(object):
         @return control signal
         '''
         # YOUR CODE HERE
-
+        u = target
+        y = sensor
+        self.u = u+ (self.Kp+self.Ki*self.dt+self.Kd/self.dt)*(u-y) - (self.Kp+2*self.Kd/self.dt)*self.e1 + (self.Kd/self.dt)*self.e2
         return self.u
 
 
