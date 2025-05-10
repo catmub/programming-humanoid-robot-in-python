@@ -21,7 +21,7 @@
 
 
 from pid import PIDAgent
-from keyframes import hello
+from keyframes import leftBellyToStand, hello, wipe_forehead
 
 
 class AngleInterpolationAgent(PIDAgent):
@@ -32,6 +32,7 @@ class AngleInterpolationAgent(PIDAgent):
                  sync_mode=True):
         super(AngleInterpolationAgent, self).__init__(simspark_ip, simspark_port, teamname, player_id, sync_mode)
         self.keyframes = ([], [], [])
+        self.start_time = self.perception.time
 
     def think(self, perception):
         target_joints = self.angle_interpolation(self.keyframes, perception)
@@ -44,27 +45,31 @@ class AngleInterpolationAgent(PIDAgent):
         # YOUR CODE HERE
         
         
-        names, times_list, keys_list = hello()
-
+        names, times_list, keys_list = keyframes
+        t = perception.time - self.start_time
         for joint_idx, name in enumerate(names):
             times = times_list[joint_idx]
             keys = keys_list[joint_idx]
-            t = perception.time %max(times)
+            #t = perception.time -self.start_time#%max(times)
             for j in range(len(times) - 1):
                 #print('time i',times[j])
                 #print('cur time', t)
                 #print('time i+1',times[j+1])
-                if times[j] <= t <= times[j + 1]:
-                    i = (t - times[0]) / (times[-1] - times[0])
+                if times[j] < t < times[j + 1]:
+                    i = (t - times[j]) / (times[j+1] - times[j])
                     
-                    P0 = keys[j][0]
-                    P3 = keys[j+1][0]
-                    P1 = P0+keys[j][2][2]       
-                    P2 = P3-keys[j+1][1][2]
+                    P0 = (keys[j][0])
+                    P3 = (keys[j+1][0])
+                    P1 = (P0+keys[j][1][2])       
+                    P2 = (P3+keys[j+1][1][2])
 
                     Bi = ((1-i)**3)*P0 +   3*((1-i)**2)*i*P1  +  3*(1-i)*(i**2)*P2  +  (i**3)*P3
                     target_joints[name] = Bi
+                    break
+            if 'LHipYawPitch' in target_joints:
+                target_joints['RHipYawPitch'] = target_joints['LHipYawPitch']
         #print(target_joints)
+
         return target_joints
 
 if __name__ == '__main__':
