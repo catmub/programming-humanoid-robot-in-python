@@ -15,6 +15,17 @@ from numpy.matlib import identity
 
 
 class InverseKinematicsAgent(ForwardKinematicsAgent):
+    def error_func(self, angles, joints, target):
+        Te = np.identity(4)
+        for joint, angle in zip(joints, joint_angles):
+            Te = np.dot(Te, self.local_trans(joint_name, angle))
+        e = matrix(self.from_transform(Te)).T
+        return np.linalg.norm(e)
+        
+    def from_trans(m):
+        '''get x, y, theta from transform matrix'''
+        return [m[0, -1], m[1, -1], atan2(m[1, 0], m[0, 0])]
+    
     def inverse_kinematics(self, effector_name, transform):
         '''solve the inverse kinematics
 
@@ -24,13 +35,32 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         '''
         joint_angles = []
         # YOUR CODE HERE
-        return joint_angles
-
+        joint_names = self.chains[effector_name]
+        target = np.matrix(self.from_trans(transform))
+        #optimized_angles = self._optimize_joint_angles(joint_names, target)
+        initial_angles = [self.perception.joint[name] for name in joint_names]
+        
+        return fmin(lambda t: self._end_effector_error(t, joint_names, target), initial_angles)
+        
+        
     def set_transforms(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
         '''
         # YOUR CODE HERE
-        self.keyframes = ([], [], [])  # the result joint angles have to fill in
+        joint_angles = self.inverse_kinematics(effector_name, transform)
+        chain = self.chains[effector_name]
+        timing = [[0.0, 3.0]] * len(joint_angles) 
+        
+
+        joint_animation = []
+        for name, angle in joint_angles.items():
+            joint_data = [
+                [self.perception.joint[name], [3, 0, 0], [3, 0, 0]], 
+                [angle, [3, 0, 0], [3, 0, 0]                        
+            ]]
+            joint_animation.append(joint_data)
+
+        self.keyframes = (chain, timings, joint_animation)
 
 if __name__ == '__main__':
     agent = InverseKinematicsAgent()

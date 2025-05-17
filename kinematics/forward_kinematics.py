@@ -126,7 +126,7 @@ class ForwardKinematicsAgent(PostureRecognitionAgent):
         offset = self.link_offsets.get(joint_name, [0, 0, 0])
         T_offset = identity(4)
         for i in range(3):
-            T_offset[i, 3] = offset[i]
+            T_offset[3, i] = offset[i]
     
         # 2. Get rotation
         axis = []
