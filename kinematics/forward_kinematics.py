@@ -115,7 +115,6 @@ class ForwardKinematicsAgent(PostureRecognitionAgent):
 
     #help function
     def rotation_matrix(axis, angle):
-    
         axis = tuple(axis)
         c, s = np.cos(angle), np.sin(angle)
         if axis == (1, 0, 0):  # X
