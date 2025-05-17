@@ -16,9 +16,14 @@ from keyframes import hello
 import pickle
 import numpy as np
 from os import path, listdir
+import os
 
-ROBOT_POSE_CLF = 'robot_pose.pkl'
-ROBOT_POSE_DATA_DIR = 'robot_pose_data'
+#ROBOT_POSE_CLF = 'robot_pose.pkl'
+#ROBOT_POSE_DATA_DIR = 'robot_pose_data'
+#for running kinematics
+BASE_DIR = os.path.dirname(__file__)
+ROBOT_POSE_CLF = os.path.join(BASE_DIR, 'robot_pose.pkl')
+ROBOT_POSE_DATA_DIR = os.path.join(BASE_DIR, 'robot_pose_data')
 classes = listdir(ROBOT_POSE_DATA_DIR)
 
 
