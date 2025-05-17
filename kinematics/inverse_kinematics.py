@@ -12,7 +12,7 @@
 
 from forward_kinematics import ForwardKinematicsAgent
 from numpy.matlib import identity
-
+import numpy as np
 
 class InverseKinematicsAgent(ForwardKinematicsAgent):
     def error_func(self, angles, joints, target):
