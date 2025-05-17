@@ -39,10 +39,10 @@ class ForwardKinematicsAgent(PostureRecognitionAgent):
         # chains defines the name of chain and joints of the chain
         self.chains = {'Head': ['HeadYaw', 'HeadPitch'],
                        # YOUR CODE HERE
-                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll', 'LWristYaw'],
+                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll'],
                        'LLeg': ['LHipYawPitch', 'LHipRoll', 'LHipPitch', 'LKneePitch', 'LAnklePitch', 'LAnkleRoll'],
                        'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch', 'RAnkleRoll'],
-                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll', 'RWristYaw']
+                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll']
                        }
         self.link_offsets = {
         # Head
@@ -81,55 +81,24 @@ class ForwardKinematicsAgent(PostureRecognitionAgent):
         'RAnkleRoll': [0.0, 0.0, 0.0],
         }
 
-        self.joint_axis= {
-        'HeadYaw': [0, 0, 1],
-        'HeadPitch': [0, 1, 0],
-
-        'RShoulderPitch': [0, 1, 0],
-        'RShoulderRoll': [0, 0, 1],
-        'RElbowYaw': [1, 0, 0],
-        'RElbowRoll': [0, 0, 1],
-        'RWristYaw' : [0, 0, 1], #??? or it might be 1,1,1
-            
-        'LShoulderPitch': [0, 1, 0],
-        'LShoulderRoll': [0, 0, 1],
-        'LElbowYaw': [0, 1, 0],
-        'LElbowRoll': [0, 0, 1],
-        'LWristYaw' : [0, 0, 1], #??? or it might be 1,1,1
-
-        'LHipYawPitch': [0, 0, 1],
-        'RHipYawPitch': [0, 0, 1],
-        
-        'LHipRoll': [1, 0, 0],
-        'LHipPitch': [0, 1, 0],
-        'LKneePitch': [0, 1, 0],
-        'LAnklePitch': [0, 1, 0],
-        'LAnkleRoll': [1, 0, 0],
-        
-        'RHipRoll': [1, 0, 0],
-        'RHipPitch': [0, 1, 0],
-        'RKneePitch': [0, 1, 0],
-        'RAnklePitch': [0, 1, 0],
-        'RAnkleRoll': [1, 0, 0],
-        }
 
     #help function
-    def rotation_matrix(axis, angle):
-        axis = tuple(axis)
+    def rotation_matrix(self, axis, angle):
+        #print(axis)
         c, s = np.cos(angle), np.sin(angle)
-        if axis == (1, 0, 0):  # X
+        if 'x' in axis:  # X
             return np.array([
                 [1, 0, 0],
                 [0, c, -s],
                 [0, s, c]
             ])
-        elif axis == (0, 1, 0):  # Y
+        elif 'y' in axis:  # Y
             return np.array([
                 [c, 0, s],
                 [0, 1, 0],
                 [-s, 0, c]
             ])
-        elif axis == (0, 0, 1):  # Z
+        elif 'z' in axis:  # Z
             return np.array([
                 [c, -s, 0],
                 [s, c, 0],
@@ -156,15 +125,23 @@ class ForwardKinematicsAgent(PostureRecognitionAgent):
         # 1. Get fixed offset
         offset = self.link_offsets.get(joint_name, [0, 0, 0])
         T_offset = identity(4)
-        T_offset[0:3, 3] = offset
+        for i in range(3):
+            T_offset[i, 3] = offset[i]
     
         # 2. Get rotation
-        axis = self.joint_axes.get(joint_name)
-        if axis is None:
-            raise KeyError(f"Missing axis definition for joint {joint_name}")
-        R = rotation_matrix(axis, joint_angle)
+        axis = []
+        if 'Yaw' in joint_name: 
+            axis.append('z')
+        if 'Pitch' in joint_name: 
+            axis.append('y')
+        if 'Roll' in joint_name: 
+            axis.append('x')
+        R = identity(3)
+        for i in axis:
+            R = R @ self.rotation_matrix(axis, joint_angle)
         T_rotate = identity(4)
-        T_rotate[0:3, 0:3] = R
+        for i in range(3):
+            T_rotate[i, i] = R[i,i]
     
         # 3. Combine: Translate then rotate
         T = T_offset @ T_rotate
@@ -181,9 +158,7 @@ class ForwardKinematicsAgent(PostureRecognitionAgent):
                 angle = joints[joint]
                 Tl = self.local_trans(joint, angle)
                 # YOUR CODE HERE
-                for joint in chain:
-                    T_local = self.local_trans(joint, joint_angles[joint])
-                    T = T @ T_local
+                T = T @ Tl
     
                 self.transforms[joint] = T
 
