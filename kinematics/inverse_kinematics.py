@@ -62,8 +62,10 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
                        'RAnkleRoll': (-0.397880, 0.769001),}
         
         #Analytical solution
-        p, R = np.asarray(transform[:3, 3]).flatten(), np.asarray(transform[:3, :3])
-  
+        #p, R = np.asarray(transform[:3, 3]).flatten(), np.asarray(transform[:3, :3])
+        transform = np.array(transform)  # Ensure it's a NumPy array
+        p, R = transform[:3, 3], transform[:3, :3]
+         
         HipOffsetZ, HipOffsetY = 0.085, 0.050
         ThighLength, TibiaLength, FootHeight = 0.100, 0.1029, 0.04519
 
@@ -108,6 +110,7 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
            for i, g in zip(initial, angles)
         ]
         self.keyframes = (names, times, keys)
+        return True
         
 if __name__ == '__main__':
     agent = InverseKinematicsAgent()
